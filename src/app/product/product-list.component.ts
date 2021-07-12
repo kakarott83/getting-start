@@ -1,17 +1,19 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Subscription } from "rxjs";
 import { IProduct } from "./product";
 import { Productservice } from "./product.service";
 
 @Component({
-    selector: 'pm-products',
     templateUrl: './product-list.compontent.html',
     styleUrls: ['./product-list.component.scss']
 })
 
-export class ProductListComponent implements OnInit {
+export class ProductListComponent implements OnInit, OnDestroy {
     pageTitle = 'Product List'
     imageWidth = 50;
     imageMargin = 2;
+    errorMessage: any;
+    sub!: Subscription;
 
     constructor(private _productService: Productservice) { }
     
@@ -32,8 +34,14 @@ export class ProductListComponent implements OnInit {
     products: IProduct[] = [];
 
     ngOnInit(): void {
-        this.products = this._productService.getProduct();
-        this.filteredProduct = this.products;
+        this.sub = this._productService.getProduct().subscribe({
+            next: products => {
+                this.products = products,
+                this.filteredProduct = this.products;
+            },
+            error: err => this.errorMessage = err
+        });
+        
     }
 
     toggleImage(): void {
@@ -49,4 +57,10 @@ export class ProductListComponent implements OnInit {
     onRatingClicked(message: string) {
         this.pageTitle = 'Product List' + ' ' + message
     }
+
+    ngOnDestroy(): void {
+        this.sub.unsubscribe();
+        
+    }
+
 }
